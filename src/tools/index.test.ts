@@ -5,7 +5,7 @@ import * as downdetector from './downdetector.js';
 
 // Mock the downdetector-api module
 vi.mock('downdetector-api', () => ({
-	default: vi.fn().mockResolvedValue({
+	downdetector: vi.fn().mockResolvedValue({
 		reports: [
 			{date: new Date(Date.now() - (2 * 60 * 60 * 1000)).toISOString(), value: 2},
 			{date: new Date(Date.now() - (60 * 60 * 1000)).toISOString(), value: 5},
