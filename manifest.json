@@ -1,0 +1,32 @@
+{
+  "dxt_version": "0.1",
+  "name": "downdetector-mcp",
+  "display_name": "Downdetector",
+  "version": "{{VERSION}}",
+  "description": "MCP server for Downdetector - check service status and outage information",
+  "icon": "icon.png",
+  "author": {
+    "name": "Adam Jones (domdomegg)",
+    "url": "https://github.com/domdomegg"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/domdomegg/downdetector-mcp"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {}
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=16.0.0"
+    }
+  }
+}

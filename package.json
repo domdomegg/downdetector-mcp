@@ -8,12 +8,15 @@
     "type": "git",
     "url": "git@github.com:domdomegg/downdetector-mcp.git"
   },
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": "dist/index.js",
   "files": [
     "dist"
   ],
   "scripts": {
+    "start": "npm run build && node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "lint": "eslint",
@@ -21,8 +24,15 @@
     "build": "tsc --project tsconfig.build.json",
     "prepublishOnly": "npm run clean && npm run build"
   },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "downdetector-api": "^2.0.0",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
+  },
   "devDependencies": {
     "@tsconfig/node-lts": "^22.0.2",
+    "@types/node": "^22.10.2",
     "eslint": "^9.32.0",
     "eslint-config-domdomegg": "^2.0.9",
     "tsconfig-domdomegg": "^1.0.0",
