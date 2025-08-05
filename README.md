@@ -2,6 +2,8 @@
 
 MCP server for Downdetector - check service status and outage information. This server provides tools to query Downdetector for service outages and status updates across various services and regions.
 
+https://github.com/user-attachments/assets/746b8535-f8b2-4ffa-828c-7b39fbf6650b
+
 - **Real-time Service Status**: Get current status reports for any service monitored by Downdetector
 - **No Authentication Required**: Direct access to public Downdetector data
 - **Global Coverage**: Support for different Downdetector domains (com, uk, it, fr, etc.)
