@@ -1,13 +1,27 @@
-# typescript-library-template
+# downdetector-mcp
 
-Personal template for creating TypeScript libraries.
+MCP server for Downdetector - check service status and outage information. This server provides tools to query Downdetector for service outages and status updates.
 
-## Quick start
+## Usage
 
-*Prequisites: Node.js, Git, and the GitHub CLI (authed). AI agents like [Claude Code](https://www.anthropic.com/claude-code) should be able to complete all these steps.*
+Add this server to your MCP client configuration to access Downdetector functionality through the Model Context Protocol.
 
-1. Run the setup script: `node setup.js [--private]`
-   - `--private` will prevent the package being published to NPM. Usually packages should be public and will be published, but if you're unsure ask the user.
-2. Complete the TODOs in `package.json` and `README.md` (don't change anything else!)
-3. Run `npm install`, then check everything works with `npm run test && npm run build && npm run lint`
-4. Commit the changes with the commit message 'Initialization from template'
+## Contributing
+
+Pull requests are welcomed on GitHub! To get started:
+
+1. Install Git and Node.js
+2. Clone the repository
+3. Install dependencies with `npm install`
+4. Run `npm run test` to run tests
+5. Build with `npm run build`
+
+## Releases
+
+Versions follow the [semantic versioning spec](https://semver.org/).
+
+To release:
+
+1. Use `npm version <major | minor | patch>` to bump the version
+2. Run `git push --follow-tags` to push with tags
+3. Wait for GitHub Actions to publish to the NPM registry.

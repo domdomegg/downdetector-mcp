@@ -1,12 +1,12 @@
 {
-  "name": "typescript-library-template",
+  "name": "downdetector-mcp",
   "version": "0.0.0",
-  "description": "Template for creating TypeScript libraries",
+  "description": "MCP server for Downdetector - check service status and outage information",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/domdomegg/typescript-library-template.git"
+    "url": "git@github.com:domdomegg/downdetector-mcp.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
