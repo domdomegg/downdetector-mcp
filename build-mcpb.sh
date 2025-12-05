@@ -18,12 +18,12 @@ rm -rf node_modules
 npm ci --omit=dev --audit false --fund false
 find node_modules -name "*.ts" -type f -delete 2>/dev/null || true
 
-# Create the DXT package
-echo "Creating DXT package..."
-rm -rf mcp-server.dxt
-# --no-dir-entries: https://github.com/anthropics/dxt/issues/18#issuecomment-3021467806
+# Create the MCPB package
+echo "Creating MCPB package..."
+rm -rf downdetector-mcp.mcpb
+# --no-dir-entries: https://github.com/anthropics/mcpb/issues/18#issuecomment-3021467806
 zip --recurse-paths --no-dir-entries \
-  mcp-server.dxt \
+  downdetector-mcp.mcpb \
   manifest.json \
   icon.png \
   dist/ \
@@ -42,4 +42,4 @@ echo "Restoring node_modules..."
 npm ci --audit false --fund false
 
 echo
-echo "DXT package created: mcp-server.dxt ($(du -h mcp-server.dxt | cut -f1))"
+echo "MCPB package created: downdetector-mcp.mcpb ($(du -h downdetector-mcp.mcpb | cut -f1))"
