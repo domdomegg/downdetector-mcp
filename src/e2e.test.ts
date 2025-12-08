@@ -12,7 +12,7 @@ import {execSync, spawn} from 'node:child_process';
 import {existsSync} from 'node:fs';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {server} from './server.js';
+import {createServer} from './server.js';
 
 type MCPClient = {
 	sendRequest: <T>(message: JSONRPCRequest) => Promise<T>;
@@ -102,6 +102,7 @@ describe.each([
 		name: 'InMemory Transport',
 		condition: true,
 		async createClient(): Promise<MCPClient> {
+			const server = createServer();
 			const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
 			await server.connect(serverTransport);
 
@@ -148,7 +149,7 @@ describe.each([
 			execSync(`mkdir -p ${testDir} && unzip -q mcp-server.dxt -d ${testDir}`);
 
 			// Start the MCP server from the extracted DXT package
-			const serverProcess = spawn('node', [path.join(testDir, 'dist/index.js')], {
+			const serverProcess = spawn('node', [path.join(testDir, 'dist/main.js')], {
 				stdio: ['pipe', 'pipe', 'pipe'],
 				env: {...process.env},
 			});

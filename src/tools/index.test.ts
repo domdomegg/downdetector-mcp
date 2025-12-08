@@ -1,7 +1,14 @@
 import {
-	describe, test, expect, vi,
+	describe, test, expect, vi, beforeEach,
 } from 'vitest';
-import * as downdetector from './downdetector.js';
+import type {
+	JSONRPCMessage,
+	JSONRPCRequest,
+	JSONRPCResponse,
+	CallToolResult,
+} from '@modelcontextprotocol/sdk/types.js';
+import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js';
+import {createServer} from '../server.js';
 
 // Mock the downdetector-api module
 vi.mock('downdetector-api', () => ({
@@ -20,26 +27,78 @@ vi.mock('downdetector-api', () => ({
 }));
 
 describe('Downdetector Tool', () => {
+	let sendRequest: <T>(message: JSONRPCRequest) => Promise<T>;
+	let cleanup: () => Promise<void>;
+
+	beforeEach(async () => {
+		const server = createServer();
+		const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
+		await server.connect(serverTransport);
+
+		sendRequest = async <T>(message: JSONRPCRequest): Promise<T> => {
+			return new Promise((resolve, reject) => {
+				clientTransport.onmessage = (response: JSONRPCMessage) => {
+					const typedResponse = response as JSONRPCResponse;
+					if ('result' in typedResponse) {
+						resolve(typedResponse.result as T);
+						return;
+					}
+
+					reject(new Error('No result in response'));
+				};
+
+				clientTransport.onerror = (err: Error) => {
+					reject(err);
+				};
+
+				clientTransport.send(message).catch((err: unknown) => {
+					reject(err instanceof Error ? err : new Error(String(err)));
+				});
+			});
+		};
+
+		cleanup = async () => server.close();
+	});
+
 	test('should handle valid service request', async () => {
-		const result = await downdetector.handler({serviceName: 'steam'});
+		const result = await sendRequest<CallToolResult>({
+			jsonrpc: '2.0',
+			id: '1',
+			method: 'tools/call',
+			params: {
+				name: 'downdetector',
+				arguments: {serviceName: 'steam'},
+			},
+		});
 
 		expect(result.content).toHaveLength(1);
 		expect(result.content[0].type).toBe('text');
-		expect(result.content[0].text).toContain('STEAM Status');
-		expect(result.content[0].text).toContain('Recent Reports');
+
+		const parsed = JSON.parse((result.content[0] as {type: 'text'; text: string}).text);
+		expect(parsed.serviceName).toBe('steam');
+		expect(parsed.recentReports).toBeDefined();
+		expect(parsed.summary).toContain('STEAM Status');
+
+		await cleanup();
 	});
 
 	test('should handle domain parameter', async () => {
-		const result = await downdetector.handler({serviceName: 'steam', domain: 'uk'});
+		const result = await sendRequest<CallToolResult>({
+			jsonrpc: '2.0',
+			id: '1',
+			method: 'tools/call',
+			params: {
+				name: 'downdetector',
+				arguments: {serviceName: 'steam', domain: 'uk'},
+			},
+		});
 
 		expect(result.content).toHaveLength(1);
 		expect(result.content[0].type).toBe('text');
-		expect(result.content[0].text).toContain('STEAM Status');
-	});
 
-	test('should validate schema', () => {
-		expect(() => downdetector.schema.parse({serviceName: 'steam'})).not.toThrow();
-		expect(() => downdetector.schema.parse({serviceName: 'steam', domain: 'uk'})).not.toThrow();
-		expect(() => downdetector.schema.parse({})).toThrow();
+		const parsed = JSON.parse((result.content[0] as {type: 'text'; text: string}).text);
+		expect(parsed.serviceName).toBe('steam');
+
+		await cleanup();
 	});
 });

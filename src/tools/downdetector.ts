@@ -1,66 +1,72 @@
 import {z} from 'zod';
 import {downdetector} from 'downdetector-api';
-import {zodToJsonSchema} from 'zod-to-json-schema';
+import type {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {jsonResult} from '../utils/response.js';
 
-export const schema = z.object({
-	serviceName: z.string().describe('The name of the service to check (e.g., "steam", "netflix", "twitter", "claude-ai")'),
-	domain: z.string().optional().describe('Optional domain for the service (e.g., "co.uk", "it", "fr"). Try to use this if you know the country the user is based in. Default: "com"'),
+const reportSchema = z.object({
+	date: z.string(),
+	value: z.number(),
 });
 
-export const tool = {
-	name: 'downdetector',
-	description: 'Get current status and outage reports for a service from Downdetector',
-	inputSchema: zodToJsonSchema(schema),
-};
+const outputSchema = z.object({
+	serviceName: z.string(),
+	currentReports: z.number().optional(),
+	lastUpdated: z.string().optional(),
+	baseline: z.number().optional(),
+	recentReports: z.array(reportSchema),
+	summary: z.string(),
+});
 
-export async function handler(args: z.infer<typeof schema>): Promise<{content: {type: 'text'; text: string}[]}> {
-	try {
-		const response = await downdetector(args.serviceName, args.domain);
+export function registerDowndetector(server: McpServer): void {
+	server.registerTool(
+		'downdetector',
+		{
+			title: 'Downdetector Status',
+			description: 'Get current status and outage reports for a service from Downdetector',
+			inputSchema: {
+				serviceName: z.string().describe('The name of the service to check (e.g., "steam", "netflix", "twitter", "claude-ai")'),
+				domain: z.string().optional().describe('Optional domain for the service (e.g., "co.uk", "it", "fr"). Try to use this if you know the country the user is based in. Default: "com"'),
+			},
+			outputSchema,
+			annotations: {
+				readOnlyHint: true,
+			},
+		},
+		async (args) => {
+			const response = await downdetector(args.serviceName, args.domain);
 
-		if (response.reports.length === 0 && response.baseline.length === 0) {
-			return {
-				content: [{
-					type: 'text',
-					text: `No report data available for ${args.serviceName}. Likely you've been blocked by Cloudflare rate-limiting.`,
-				}],
-			};
-		}
+			if (response.reports.length === 0 && response.baseline.length === 0) {
+				const result = outputSchema.parse({
+					serviceName: args.serviceName,
+					recentReports: [],
+					summary: `No report data available for ${args.serviceName}. Likely you've been blocked by Cloudflare rate-limiting.`,
+				});
+				return jsonResult(result);
+			}
 
-		const latestReport = response.reports[response.reports.length - 1];
-		const latestBaseline = response.baseline[response.baseline.length - 1];
-
-		let statusText = `## ${args.serviceName.toUpperCase()} Status\n\n`;
-
-		if (latestReport) {
-			statusText += `**Current reports:** ${latestReport.value}\n`;
-			statusText += `**Last updated:** ${new Date(latestReport.date).toLocaleString()}\n`;
-		}
-
-		if (latestBaseline) {
-			statusText += `**Baseline:** ${latestBaseline.value}\n`;
-		}
-
-		if (response.reports.length > 0) {
-			statusText += '\n### Recent Reports:\n';
+			const latestReport = response.reports[response.reports.length - 1];
+			const latestBaseline = response.baseline[response.baseline.length - 1];
 			const recentReports = response.reports.slice(-10);
-			recentReports.forEach((report) => {
-				const date = new Date(report.date).toLocaleString();
-				statusText += `- ${date}: ${report.value} reports\n`;
-			});
-		}
 
-		return {
-			content: [{
-				type: 'text',
-				text: statusText,
-			}],
-		};
-	} catch (error) {
-		return {
-			content: [{
-				type: 'text',
-				text: `Failed to get status for ${args.serviceName}: ${error instanceof Error ? error.message : String(error)}`,
-			}],
-		};
-	}
+			let summary = `${args.serviceName.toUpperCase()} Status: `;
+			if (latestReport) {
+				summary += `${latestReport.value} reports as of ${new Date(latestReport.date).toLocaleString()}`;
+			}
+
+			if (latestBaseline) {
+				summary += ` (baseline: ${latestBaseline.value})`;
+			}
+
+			const result = outputSchema.parse({
+				serviceName: args.serviceName,
+				currentReports: latestReport?.value,
+				lastUpdated: latestReport?.date,
+				baseline: latestBaseline?.value,
+				recentReports,
+				summary,
+			});
+
+			return jsonResult(result);
+		},
+	);
 }
