@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/746b8535-f8b2-4ffa-828c-7b39fbf6650b
 
 ## Installation
 
-Follow the up-to-date instructions on [install-mcp](https://adamjones.me/install-mcp/?config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImRvd25kZXRlY3Rvci1tY3AiXSwibmFtZSI6ImRvd25kZXRlY3RvciJ9), which generates the right config for your MCP client (Claude Code, Claude Desktop, Cursor, Cline, VS Code, and more).
+Follow the instructions on [install-mcp](https://adamjones.me/install-mcp/?config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImRvd25kZXRlY3Rvci1tY3AiXSwibmFtZSI6ImRvd25kZXRlY3RvciJ9), which generates the right config for your MCP client (Claude Code, Claude Desktop, Cursor, Cline, VS Code, and more).
 
 ## Example Usage
 
