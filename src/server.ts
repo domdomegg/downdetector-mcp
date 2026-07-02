@@ -1,3 +1,5 @@
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {
 	CallToolRequestSchema,
@@ -5,10 +7,12 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import {tools} from './tools/index.js';
 
+const {version} = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')) as {version: string};
+
 // Create the server
 export const server = new Server({
 	name: 'downdetector-mcp',
-	version: '0.0.0',
+	version,
 }, {
 	capabilities: {
 		tools: {},
