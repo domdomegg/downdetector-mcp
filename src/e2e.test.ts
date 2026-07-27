@@ -2,6 +2,7 @@ import {
 	describe, test, expect, beforeEach, afterEach,
 } from 'vitest';
 import type {
+	CallToolResult,
 	JSONRPCMessage,
 	JSONRPCRequest,
 	JSONRPCResponse,
@@ -195,6 +196,38 @@ describe.each([
 					type: 'object',
 				}),
 			});
+		}, 30_000);
+
+		// Hits the real Downdetector API, so this asserts on the shape of the
+		// response rather than specific report counts. Downdetector sits behind
+		// Cloudflare and blocks shared CI egress, so when the request doesn't get
+		// through we assert the failure was handled gracefully and stop there --
+		// otherwise this test would fail for reasons unrelated to the server.
+		test('should get a service status via tools/call', async ({skip}) => {
+			const result = await client.sendRequest<CallToolResult>({
+				jsonrpc: '2.0',
+				id: '2',
+				method: 'tools/call',
+				params: {
+					name: 'downdetector',
+					arguments: {serviceName: 'steam'},
+				},
+			});
+
+			expect(result.content).toHaveLength(1);
+			expect(result.content[0].type).toBe('text');
+
+			const {text} = result.content[0] as {text: string};
+
+			if (text.includes('No report data available') || text.startsWith('Failed to get status')) {
+				skip('Downdetector unreachable from this network (Cloudflare)');
+				return;
+			}
+
+			expect(result.isError).toBeFalsy();
+			expect(text).toContain('STEAM Status');
+			expect(text).toMatch(/\*\*Current reports:\*\* \d+/);
+			expect(text).toContain('Recent Reports');
 		}, 30_000);
 	});
 });
