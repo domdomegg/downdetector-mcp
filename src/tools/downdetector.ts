@@ -1,6 +1,5 @@
 import {z} from 'zod';
 import {downdetector} from 'downdetector-api';
-import {zodToJsonSchema} from 'zod-to-json-schema';
 
 export const schema = z.object({
 	serviceName: z.string().describe('The name of the service to check (e.g., "steam", "netflix", "twitter", "claude-ai")'),
@@ -10,7 +9,6 @@ export const schema = z.object({
 export const tool = {
 	name: 'downdetector',
 	description: 'Get current status and outage reports for a service from Downdetector',
-	inputSchema: zodToJsonSchema(schema),
 };
 
 export async function handler(args: z.infer<typeof schema>): Promise<{content: {type: 'text'; text: string}[]}> {

@@ -1,16 +1,12 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {Server} from '@modelcontextprotocol/sdk/server/index.js';
-import {
-	CallToolRequestSchema,
-	ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {tools} from './tools/index.js';
 
 const {version} = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')) as {version: string};
 
 // Create the server
-export const server = new Server({
+export const server = new McpServer({
 	name: 'downdetector-mcp',
 	version,
 }, {
@@ -19,37 +15,13 @@ export const server = new Server({
 	},
 });
 
-// Handle tool list requests
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-	return {
-		tools: Object.values(tools).map((module) => module.tool),
-	};
-});
-
-// Handle tool execution requests
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-	const {name, arguments: args} = request.params;
-
-	try {
-		const toolModule = tools[name];
-		if (!toolModule) {
-			throw new Error(`Unknown tool: ${name}`);
-		}
-
-		// Validate arguments using the tool's schema
-		const validatedArgs = toolModule.schema.parse(args);
-
-		// Call the tool's handler
-		return await toolModule.handler(validatedArgs);
-	} catch (error) {
-		return {
-			content: [{
-				type: 'text',
-				text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-			}],
-			isError: true,
-		};
-	}
+// Register the tools. McpServer validates arguments against inputSchema and
+// wraps thrown errors into an isError response, so the handlers stay plain.
+Object.values(tools).forEach((module) => {
+	server.registerTool(module.tool.name, {
+		description: module.tool.description,
+		inputSchema: module.schema.shape,
+	}, async (args: Record<string, unknown>) => module.handler(args));
 });
 
 // Error handling
