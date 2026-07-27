@@ -7,7 +7,7 @@ const {version: pkgVersion} = JSON.parse(readFileSync(fileURLToPath(new URL('../
 
 describe('server', () => {
 	it('reports the package.json version, not a hardcoded literal', () => {
-		const {version} = (server as unknown as {_serverInfo: {version: string}})._serverInfo;
+		const {version} = (server.server as unknown as {_serverInfo: {version: string}})._serverInfo;
 		expect(version).toBe(pkgVersion);
 	});
 });
