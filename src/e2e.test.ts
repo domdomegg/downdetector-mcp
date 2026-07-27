@@ -199,20 +199,40 @@ describe.each([
 		}, 30_000);
 
 		// Hits the real Downdetector API, so this asserts on the shape of the
-		// response rather than specific report counts. Downdetector sits behind
-		// Cloudflare and blocks shared CI egress, so when the request doesn't get
-		// through we assert the failure was handled gracefully and stop there --
-		// otherwise this test would fail for reasons unrelated to the server.
+		// response rather than specific report counts.
+		//
+		// Downdetector sits behind Cloudflare, which blocks shared CI egress: the
+		// request either fails fast or hangs. Both outcomes skip rather than fail,
+		// since neither says anything about the server. The race gives the request
+		// a shorter deadline than the test itself so a hang skips instead of
+		// blowing the test timeout.
 		test('should get a service status via tools/call', async ({skip}) => {
-			const result = await client.sendRequest<CallToolResult>({
-				jsonrpc: '2.0',
-				id: '2',
-				method: 'tools/call',
-				params: {
-					name: 'downdetector',
-					arguments: {serviceName: 'steam'},
-				},
+			const TIMED_OUT = Symbol('timed-out');
+			let timer: NodeJS.Timeout | undefined;
+
+			const result = await Promise.race([
+				client.sendRequest<CallToolResult>({
+					jsonrpc: '2.0',
+					id: '2',
+					method: 'tools/call',
+					params: {
+						name: 'downdetector',
+						arguments: {serviceName: 'steam'},
+					},
+				}),
+				new Promise<typeof TIMED_OUT>((resolve) => {
+					timer = setTimeout(() => {
+						resolve(TIMED_OUT);
+					}, 15_000);
+				}),
+			]).finally(() => {
+				clearTimeout(timer);
 			});
+
+			if (result === TIMED_OUT) {
+				skip('Downdetector did not respond in time (Cloudflare blocking CI egress)');
+				return;
+			}
 
 			expect(result.content).toHaveLength(1);
 			expect(result.content[0].type).toBe('text');
